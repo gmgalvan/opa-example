@@ -1,0 +1,22 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: mandatorylabels
+spec:
+  crd:
+    spec:
+      names:
+        kind: MandatoryLabels
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package mandatory_labels
+
+        violation[{"msg": msg}] {
+          input.review.object.kind == "Pod"
+          missing_label := required_labels[_]
+          not input.review.object.metadata.labels[missing_label]
+          msg := sprintf("El Pod no tiene la etiqueta requerida: %s", [missing_label])
+        }
+
+        required_labels := {"team", "environment"}
